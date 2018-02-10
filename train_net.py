@@ -19,8 +19,8 @@ from GlobalConstont import *
 
 
 # the .pkl file lists of data set
-pkl_list = ['../dcdata/' + str(i) + '.pkl' for i in range(1, 12)]
-val_list = ['../dcdata/val.pkl']
+pkl_list = ['data/' + str(i) + '.pkl' for i in range(1, 12)]
+val_list = ['data/val.pkl']
 sum_dir = 'sum'
 train_dir = 'train'
 
@@ -70,7 +70,7 @@ def train():
 
         summary_writer = tf.train.SummaryWriter(
             sum_dir, sess.graph)
-        # val_loss = []
+        val_loss = []
 
         last_epoch = data_generator.epoch
 

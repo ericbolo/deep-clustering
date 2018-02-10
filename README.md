@@ -1,6 +1,6 @@
 # A tensorflow implementation of deep clustering for speech seperation
 This is a tensorflow implementation of the deep clustering paper: https://arxiv.org/abs/1508.04306
-A few exmaples from the test set can be viewed in visualization_samples/ and speech_samples/
+A few examples from the test set can be viewed in visualization_samples/ and speech_samples/
 
 ## Requirements
 Python 2 and its packages:
@@ -24,7 +24,7 @@ Python 2 and its packages:
 ## Training procedure
   1. Orgnize your speech data files as the following format:
       root_dir/speaker_id/speech_files.wav
-  2. Make some changes dir of the datagenerator.py and run it, you may want to rename the .pkl file properly.
+  2. Make some changes dir of the datagenerator.py and run it, you may want to rename the .pkl file properly. 
   3. Make dirs for write summaries and checkpoints, update your dirs in the train_net.py. The changes of the .pkl file list for      training and validation are also need to be made.
   4. Train the model.
   5. Generate some mixtures using mix_samples.py, and modify the checkpoints in audio_test.py.

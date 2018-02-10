@@ -1,0 +1,87 @@
+# Feb 9 2018
+
+
+I can now generate datasets to generate two-speaker mixtures.
+
+next: run training on a toy dataset.
+
+-----
+
+Constructing tiny db:
+
+ffmpeg -i ange_ansour.mp4 -ar 8000 -ac 1 ange_ansour.wav
+
+-----
+
+All packages installed locally.
+
+-----
+
+Installing packages librosa, matplotlib, numpy, scikit-learn
+
+Installing tensorflow r0.11
+
+pip install --upgrade https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl
+
+-----
+
+Skipping pyenv, too bad.
+
+eric@eric-laptop:~/deep-clustering$ virtualenv bv_env
+New python executable in /home/eric/deep-clustering/bv_env/bin/python
+Installing setuptools, pip, wheel...done.
+eric@eric-laptop:~/deep-clustering$ source bv_env/bin/activate
+
+
+-----
+
+
+Testing deep clustering.
+
+Installing pyenv to manage python versions:
+
+https://github.com/pyenv/pyenv-installer
+
+    curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+
+Added these lines to ~/.bashrc as instructed:
+
+    export PATH="/home/eric/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+
+
+Installing dependencies (first build of 2.7 failed):
+
+    sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
+    libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+    xz-utils tk-dev
+
+If after this you still get messages about open ssl missing:
+
+Also look at : https://github.com/pyenv/pyenv/wiki/Common-build-problems#error-the-python-ssl-extension-was-not-compiled-missing-the-openssl-lib
+
+
+
+This is proving more difficult than I had thought. Still can't find the open ssl dependency
+
+
+Trying:
+
+sudo apt-get remove openssl
+
+THEN
+
+pyenv install 2.7
+
+
+Same problem...
+
+
+------
+
+
+Original github source: https://github.com/zhr1201/deep-clustering
+
+
+

@@ -27,14 +27,14 @@ def stft(sig, frameSize, overlapFac=0.75, window=np.hanning):
     # samples = np.append(samples, np.zeros(frameSize))
     frames = stride_tricks.as_strided(
         samples,
-        shape=(cols, frameSize),
+        shape=(np.int(cols), frameSize),
         strides=(samples.strides[0] * hopSize, samples.strides[0])).copy()
     frames *= win
     return np.fft.rfft(frames)
 
 
 class DataGenerator(object):
-    def __init__(self, data_dir, batch_size):
+    def __init__(self, data_dir, batch_size, partition="train"):
         '''preprocess the training data
         data_dir: dir containing the training data
                   format:root_dir + speaker_dir + wavfiles'''
@@ -45,6 +45,7 @@ class DataGenerator(object):
         self.batch_size = batch_size
         self.speaker_file = {}
         self.epoch = 0
+        self.partition = partition
 
         # get the files in each speakers dir
         for i in range(self.n_speaker):
@@ -140,7 +141,7 @@ class DataGenerator(object):
                 self.samples.append(sample_dict)
                 k = k + FRAMES_PER_SAMPLE
         # dump the generated sample list
-        cPickle.dump(self.samples, open('val.pkl', 'wb'))
+        cPickle.dump(self.samples, open('/home/eric/deep-clustering/data/'+self.partition+'.pkl', 'wb'))
         self.tot_samp = len(self.samples)
         np.random.shuffle(self.samples)
 
@@ -161,7 +162,14 @@ class DataGenerator(object):
 
 
 if __name__ == '__main__':
-    data_dir = '/media/nca/data/raw_data/speech_train_rs/'
-    # data_dir = 'speech/'
-    gen = DataGenerator(data_dir, 64)
+
+    # training set
+    data_dir = '/home/eric/deep-clustering/db/train/'
+    gen = DataGenerator(data_dir, 64, partition="train")
     gen.reinit()
+
+    # validation set
+    data_dir = '/home/eric/deep-clustering/db/validation/'
+    gen = DataGenerator(data_dir, 64, partition="validation")
+    gen.reinit()
+
