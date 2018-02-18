@@ -11,15 +11,15 @@ import time
 
 import numpy as np
 import tensorflow as tf
-import ipdb
 from datagenerator2 import DataGenerator
 from model import Model
 
-from GlobalConstont import *
+from config import *
 
 
 # the .pkl file lists of data set
-pkl_list = ['data/' + str(i) + '.pkl' for i in range(1, 12)]
+#pkl_list = ['data/' + str(i) + '.pkl' for i in range(1, 12)]
+pkl_list = ['data/train.pkl']
 val_list = ['data/val.pkl']
 sum_dir = 'sum'
 train_dir = 'train'
@@ -119,6 +119,9 @@ def train():
                 checkpoint_path = os.path.join(train_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=step)
 
+            '''
+            TODO: fix; validation step causes a tensor shape incompatibility error on remote
+
             if last_epoch != data_generator.epoch:
                 # doing validation every training epoch
                 print('Doing validation')
@@ -153,6 +156,7 @@ def train():
                 val_loss.append(loss_sum / count)
                 print ('validation loss: %.3f' % (loss_sum / count))
                 np.array(val_loss).tofile('val_loss')
+            '''
 
             last_epoch = data_generator.epoch
 

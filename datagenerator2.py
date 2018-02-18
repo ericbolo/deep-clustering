@@ -13,7 +13,7 @@ import matplotlib as mpl
 mpl.use('agg')
 from matplotlib import pyplot as plt
 import cPickle
-from GlobalConstont import *
+from config import *
 
 
 class DataGenerator(object):

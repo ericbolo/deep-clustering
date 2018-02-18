@@ -6,12 +6,10 @@ import numpy as np
 import librosa
 import cPickle
 from numpy.lib import stride_tricks
-import ipdb
 import os
 import matplotlib as mpl
 mpl.use('agg')
-from matplotlib import pyplot as plt
-from GlobalConstont import *
+from config import *
 
 
 def stft(sig, frameSize, overlapFac=0.75, window=np.hanning):
@@ -34,13 +32,13 @@ def stft(sig, frameSize, overlapFac=0.75, window=np.hanning):
 
 
 class DataGenerator(object):
-    def __init__(self, data_dir, batch_size, partition="train"):
+    def __init__(self, db_dir, batch_size, partition="train"):
         '''preprocess the training data
-        data_dir: dir containing the training data
+        db_dir: dir containing the training data
                   format:root_dir + speaker_dir + wavfiles'''
         # get dirs for each speaker
-        self.speakers_dir = [os.path.join(data_dir, i)
-                             for i in os.listdir(data_dir)]
+        self.speakers_dir = [os.path.join(db_dir, i)
+                             for i in os.listdir(db_dir)]
         self.n_speaker = len(self.speakers_dir)
         self.batch_size = batch_size
         self.speaker_file = {}
@@ -55,8 +53,6 @@ class DataGenerator(object):
                 if i not in self.speaker_file:
                     self.speaker_file[i] = []
                 self.speaker_file[i].append(j)
-        # ipdb.set_trace()
-        # self.reinit()
 
     def resample(self):
         '''Resample all the files, not always necessary'''
@@ -114,8 +110,6 @@ class DataGenerator(object):
                 speech_mix_spec, np.max(speech_mix_spec) / MIN_AMP)
             speech_mix_spec = 20. * np.log10(speech_mix_spec * AMP_FAC)
             max_mag = np.max(speech_mix_spec)
-            # if np.isnan(max_mag):
-                # import ipdb; ipdb.set_trace()
             speech_VAD = (speech_mix_spec > (max_mag - THRESHOLD)).astype(int)
             # print 'mean:' + str(np.mean(speech_mix_spec)) + '\n'
             # print 'std:' + str(np.std(speech_mix_spec)) + '\n'
@@ -141,7 +135,7 @@ class DataGenerator(object):
                 self.samples.append(sample_dict)
                 k = k + FRAMES_PER_SAMPLE
         # dump the generated sample list
-        cPickle.dump(self.samples, open('/home/eric/deep-clustering/data/'+self.partition+'.pkl', 'wb'))
+        cPickle.dump(self.samples, open('data/'+self.partition+'.pkl', 'wb'))
         self.tot_samp = len(self.samples)
         np.random.shuffle(self.samples)
 
@@ -164,12 +158,14 @@ class DataGenerator(object):
 if __name__ == '__main__':
 
     # training set
-    data_dir = '/home/eric/deep-clustering/db/train/'
-    gen = DataGenerator(data_dir, 64, partition="train")
+    db_dir = 'db/train/'
+    gen = DataGenerator(db_dir, 64, partition="train")
     gen.reinit()
 
+    '''
+    # ONLY BUILDING TRAINING SET FOR NOW
     # validation set
-    data_dir = '/home/eric/deep-clustering/db/validation/'
-    gen = DataGenerator(data_dir, 64, partition="validation")
+    db_dir = 'db/validation/'
+    gen = DataGenerator(db_dir, 64, partition="val")
     gen.reinit()
-
+    '''

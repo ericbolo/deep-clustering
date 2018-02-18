@@ -1,4 +1,12 @@
 bv_env/
-db/
+db/train/
+db/original/
+db/wav/
+db/test/
+db/validation/
 data/
 .idea/
+test/
+tests/
+audiocut/
+data.tar.gz

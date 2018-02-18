@@ -1,5 +1,283 @@
+# Feb 17 2018
+
+Try running audio_test.py on a mix generated from Obama, Clinton speeches NOT in training set.
+
+ffmpeg -i clinton_20080603_64.mp3 -ss 00:00:15 -to 00:00:18  -ac 1 -ar 8000 01_clinton.wav
+
+------
+
+By increasing FRAMES_PER_SAMPLE to 1000 (*256 samples per frame, 8kHz ~= 3 seconds), I can now separate both voices when feeding it training data.
+See /home/eric/deep-clustering/tests/02_experiment/02_test_from_training_set/04 and /home/eric/deep-clustering/tests/02_experiment/02_test_from_training_set/04.
+
+------
+
+build_train_db.py ready.
+
+Results so far: voices are cleanly separated but speaker assignment is messed up.
+
+See issue I posted: https://github.com/zhr1201/deep-clustering/issues/8
+
+repo owner answer:
+
+"
+The model doesn’t have the module to detect the number of speakers in a mixture,
+and another module to decide the matching order to concatenate the chunks of frames is also needed.
+Both the modules are now done manually and it’s not reported in the original paper.
+"
+
+# Feb 16 2018
+
+Ffmpeg command for conversion and truncation:
+
+ffmpeg -i barackobamasyrianationspeechARXE.mp3 -ss 00:00:20 -to 00:00:25  -ac 1 -ar 8000 copy.wav
+
+
+Probably best to keep waves full and truncate during audiocut.
+
+python audiocut.py -v foo.wav 0:0:15:0 0:10:0:0 0:0:7:0
+
+--------
+
+Next: write audio chunking script.
+
+/home/eric/deep-clustering/datagenerator.py: doesn't require that the number of files for each speaker be equal.
+
+If they aren't then the same file from speakers with fewer waves will be mixed with different files
+from speakers with more wavs.
+
+So as long as the numbers are similar, it's robust.
+
+But all files SHOULD be of equal lengths (3 seconds).
+
+Notes: try shorter chunks (3 seconds) so that I can keep the 40-dimensional embeddings.
+
+Also, ignoring validation at this point.
+
+--------
+
+Experiment with Bernard Werber and Ange Ansour, with utterance level training data, talks yielded better
+results even on test set. So promising for speaker-dependent separation.
+
+Next: building a larger database with ~ two hours of data for each speaker.
+Using Obama and Clinton speeches.
+
+Obama
+
+/home/eric/deep-clustering/db/validation/barackobamabritishparliamentARXE.mp3: from 10 seconds to ~ 30 minutes
+
+http://www.americanrhetoric.com/mp3clipsXE/barackobama/barackobamaafghanistantroopreductionARXE.mp3: full 13 minute audio
+
+/home/eric/deep-clustering/db/validation/barackobamamlkingmemorialdedicationARXE.mp3 first 18 minutes
+
+/home/eric/deep-clustering/db/validation/barackobamasanjosesurveillanceARXE.mp3: 1 min to ~26 minutes
+
+###
+
+/home/eric/deep-clustering/db/full/barack_obama/barackobamasenatespeechonbailout.mp3 : 6 sec to 13:58
+
+/home/eric/deep-clustering/db/full/barack_obama/barackobamasyrianationspeechARXE.mp3: 10 sec to 15:12 (strong reverb)
+
+/home/eric/deep-clustering/db/full/barack_obama/barackobamaintelprogramreviewoutcome.mp3: 20 sec to 42:30
+
+
+--------------
+
+Clinton
+
+(found with google search: https://www.google.fr/search?domains=www.americanrhetoric.com&q=hillary+clinton&sa=Search&sitesearch=www.americanrhetoric.com&client=pub-4540749582151874&ie=ISO-8859-1&oe=ISO-8859-1&cof=GALT:%23008000%3BGL:1%3BDIV:%23336699%3BVLC:663399%3BAH:center%3BBGC:FFFFFF%3BLBGC:336699%3BALC:0000FF%3BLC:0000FF%3BT:000000%3BGFNT:0000FF%3BGIMP:0000FF%3BFORID:1&hl=en&gws_rd=cr&dcr=0&ei=UO-GWvfzJoKdsAf2vorYDg)
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonhumanrightsagenda.mp3: starts at 50 sec to ~39 min
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonbenghazitransferceremonyARXE.mp3: full 9 min clip
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonhagueinternetfreedomconferenceARXE.mp3: 5 sec to 26:00
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclinton911benghaziARXE.mp3: 10 s to 9:14
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonwikileakspresserARXE.mp3: full (15:23)
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonintntlhumanrightsdayARXE.mp3: 10 sec to ~28 minutes
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintongwinternetfreedomARXE.mp3: 10 sec to 43:30
+
+/home/eric/deep-clustering/db/full/hillary_clinton/hillaryclintonwomeneconomysummitARXE.mp3: 10 sec to 30:30
+
+https://www.youtube.com/watch?v=VNc6oAnCOLs "Hillary Clinton full economy speech" 20 sec to ~42 min
+
+
+
+# Feb 15 2018
+
+
+Train runs (no validation for now)
+
+----
+
+Getting error when doing validation:
+
+Doing validation
+Traceback (most recent call last):
+  File "train_net.py", line 165, in <module>
+    train()
+  File "train_net.py", line 155, in train
+    p_keep_rc: 1})
+  File "/home/ubuntu/deep-clustering/remote_env/local/lib/python2.7/site-packages/tensorflow/python/client/session.py", line 717, in run
+    run_metadata_ptr)
+  File "/home/ubuntu/deep-clustering/remote_env/local/lib/python2.7/site-packages/tensorflow/python/client/session.py", line 894, in _run
+    % (np_val.shape, subfeed_t.name, str(subfeed_t.get_shape())))
+ValueError: Cannot feed value of shape (48, 100, 129) for Tensor u'Placeholder_2:0', which has shape '(128, 100, 129)'
+
+Since the goal is to overfit the training data, skip this for now. Will need to be fixed eventually, however.
+
+-----
+
+
+Getting invalid shape error during validation, because the last file output by audiocut.py is shorter than the rest
+
+In the future avoid this by making sure duration considered is a multiple of the chunk size.
+
+----
+
+
+Getting Out Of Memory (OOM) erros with embedding dimension = 40 (despite having 7-second-only utterances).
+
+Reducing embedding to be 30-dimensional.
+
+----
+
+Note, when training: watch out whether you want to start from a checkpoint or start anew.
+(I was getting an error having to do with incompatible shapes b/c was starting from a checkpoint
+with embedding_dim = 10).
+
+
+-----
+
+Generating utterances:
+
+starts at 15 seconds, ends at 10 minutes, 7-second chunks
+
+python audiocut.py -v foo.wav 0:0:15:0 0:10:0:0 0:0:7:0
+
+python audiocut.py -v foo.wav [start time] [end time] [chunk length]
+
+# Feb 14 2018
+
+Found this audio library, could be useful: https://github.com/gabrielwolf/audiocut
+An interesting alternative to ffmpeg.
+
+-----
+
+Building two-speaker database.
+
+Goal is to train a speaker-dependent diarization system.
+
+- script to split a file into many utterances (say, 5 second utterances).
+
+    ffmpeg -ss 00:00:05 -t 00:00:05 -i ange_ansour.wav truncated_ange_ansour.wav
+
+# Feb 12 2018
+
+First experiment started to yield (overfitted) results.
+
+Trained on 4 speakers, one 10 minute-long file long for each.
+
+In the paper, they trained on utterances, not entire speeches.
+
+Designing the next experiment, toy dataset with two speakers, one male, one female.
+
+100 * 5s utterances for each speaker = 8.33 minutes each
+
+e.g. take Ange Ansour and Bernard Werber.
+
+Goal is to OVERFIT
+
+Other note: Out of Memory error was probably due to samples being WAY too big (minutes instead of seconds-long, as they are
+in the original paper).
+
+Take the SAME speakers, different utterances for the validation set (speaker-dependent experiment).
+
 # Feb 9 2018
 
+Testing first checkpoint of model on an easy case, man vs. woman
+
+ffmpeg -ss 00:00:05 -t 00:00:05 -i ange_ansour.wav truncated_ange_ansour.wav
+
+When running audio_test.py, I get a NoBackEndError
+
+-----
+
+Example applications of deep clustering only show simultaneous voices.
+
+What about sequential with some overlap, as in most phone calls ?
+
+-----
+
+Idea: run experiments, memory usage, perforamnce across a grid of parameters
+
+-----
+
+Model running with EMBEDDING_D = 10
+
+-----
+
+Training script runs, but getting an Out Of Memory error:
+
+ResourceExhaustedError (see above for traceback): OOM when allocating tensor with shape[128,12900,40]
+	 [[Node: gradients/transpose_4_grad/transpose = Transpose[T=DT_FLOAT, Tperm=DT_INT32, _device="/job:localhost/replica:0/task:0/gpu:0"](gradients/BatchMatMul_grad/tuple/control_dependency, gradients/transpose_4_grad/InvertPermutation)]]
+
+
+Stats:
+
+Limit:                  3868721152
+InUse:                  3824706816
+MaxInUse:               3825321984
+NumAllocs:                   35475
+MaxAllocSize:            370720768
+
+
+Reducing the embedding dimension from 40 to 10
+
+EMBEDDING_D = 10
+
+-----
+
+Deep learning AMI uses CUDA 9 by default. Switching to 8:
+
+ImportError: libcudart.so.8.0: cannot open shared object file: No such file or directory
+(remote_env) ubuntu@ip-172-31-41-142:~/deep-clustering$ nvcc --version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2017 NVIDIA Corporation
+Built on Fri_Sep__1_21:08:03_CDT_2017
+Cuda compilation tools, release 9.0, V9.0.176
+(remote_env) ubuntu@ip-172-31-41-142:~/deep-clustering$ cat /usr/local/cuda/version.txt
+CUDA Version 9.0.176
+(remote_env) ubuntu@ip-172-31-41-142:~/deep-clustering$ ls /usr/local | grep cuda
+cuda
+cuda-8.0
+cuda-9.0
+(remote_env) ubuntu@ip-172-31-41-142:~/deep-clustering$ ln -s /usr/local/cuda8.0 /usr/local/cuda
+ln: failed to create symbolic link '/usr/local/cuda/cuda8.0': Permission denied
+(remote_env) ubuntu@ip-172-31-41-142:~/deep-clustering$ sudo ln -s /usr/local/cuda8.0 /usr/local/cuda
+
+wait, that didn't create the symlink.
+
+I first had to remove existing symlink:
+
+(remote_env) ubuntu@ip-172-31-41-142:/usr/local$ sudo rm cuda
+(remote_env) ubuntu@ip-172-31-41-142:/usr/local$ cat /usr/local/cuda/version.txtcat: /usr/local/cuda/version.txt: No such file or directory
+(remote_env) ubuntu@ip-172-31-41-142:/usr/local$ sudo ln -s /usr/local/cuda-8.0 /usr/local/cuda
+(remote_env) ubuntu@ip-172-31-41-142:/usr/local$ cat /usr/local/cuda/version.txtCUDA Version 8.0.61
+
+
+-----
+
+Training on toy dataset.
+
+1st step: setting up environment on a g2.2xlarge ubuntu "Deep learning" instance
+
+34.243.233.41
+
+----
 
 I can now generate datasets to generate two-speaker mixtures.
 
@@ -61,10 +339,7 @@ If after this you still get messages about open ssl missing:
 
 Also look at : https://github.com/pyenv/pyenv/wiki/Common-build-problems#error-the-python-ssl-extension-was-not-compiled-missing-the-openssl-lib
 
-
-
 This is proving more difficult than I had thought. Still can't find the open ssl dependency
-
 
 Trying:
 

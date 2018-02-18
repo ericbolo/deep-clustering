@@ -23,7 +23,7 @@ import itertools
 from AudioSampleReader import AudioSampleReader
 from model import Model
 
-from GlobalConstont import *
+from config import *
 
 
 data_dir = 'mix.wav'

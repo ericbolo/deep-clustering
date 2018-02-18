@@ -5,7 +5,7 @@ import numpy as np
 import ipdb
 import tensorflow as tf
 
-from GlobalConstont import *
+from config import *
 
 # from ln_lstm import LayerNormalizedLSTMCell
 # from bnlstm import BNLSTMCell
@@ -29,11 +29,11 @@ class Model(object):
         # biases and weights for the last layer
         self.weights = {
             'out': tf.Variable(
-                tf.random_normal([2 * n_hidden, EMBBEDDING_D * NEFF]))
+                tf.random_normal([2 * n_hidden, EMBEDDING_D * NEFF]))
         }
         self.biases = {
             'out': tf.Variable(
-                tf.random_normal([EMBBEDDING_D * NEFF]))
+                tf.random_normal([EMBEDDING_D * NEFF]))
         }
 
     def inference(self, x):
@@ -125,20 +125,20 @@ class Model(object):
         emb_out = tf.matmul(out_concate,
                             self.weights['out']) + self.biases['out']
         emb_out = tf.nn.tanh(emb_out)
-        reshaped_emb = tf.reshape(emb_out, [-1, NEFF, EMBBEDDING_D])
+        reshaped_emb = tf.reshape(emb_out, [-1, NEFF, EMBEDDING_D])
         # normalization before output
         normalized_emb = tf.nn.l2_normalize(reshaped_emb, 2)
         return normalized_emb
 
     def loss(self, embeddings, Y, VAD):
         '''Defining the loss function'''
-        embeddings_rs = tf.reshape(embeddings, shape=[-1, EMBBEDDING_D])
+        embeddings_rs = tf.reshape(embeddings, shape=[-1, EMBEDDING_D])
         VAD_rs = tf.reshape(VAD, shape=[-1])
         # get the embeddings with active VAD
         embeddings_rsv = tf.transpose(
             tf.mul(tf.transpose(embeddings_rs), VAD_rs))
         embeddings_v = tf.reshape(
-            embeddings_rsv, [-1, FRAMES_PER_SAMPLE * NEFF, EMBBEDDING_D])
+            embeddings_rsv, [-1, FRAMES_PER_SAMPLE * NEFF, EMBEDDING_D])
         # get the Y(speaker indicator function) with active VAD
         Y_rs = tf.reshape(Y, shape=[-1, 2])
         Y_rsv = tf.transpose(

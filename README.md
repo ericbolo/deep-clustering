@@ -36,3 +36,9 @@ Python 2 and its packages:
 ## References
   https://arxiv.org/abs/1508.04306
   
+#### BATVOICE ####
+
+## EXPERIMENTS
+
+Preliminary speaker-dependent models (separating the voices of Obama and Hillary Clinton) in tests.tar.gz
+  
