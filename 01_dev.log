@@ -1,3 +1,32 @@
+# Mar 8 2018
+
+Testing speaker separation with (1) single speaker in mixture, (2) two speakers in mixture with partial overlap.
+
+----
+
+Remote IP: 52.214.81.112
+
+# Feb 21 2018
+
+Preparing presentation for the tech meeting. Writing it in LaTEX.
+
+Presentation structure:
+
+1. Deep clustering (DCL)
+
+    * Algorithm overview
+    * Experiment
+
+2. Deep attractor (DA)
+
+    * Algorithm overview
+
+3. Speaker diarization with recurrent CNNs (compare)
+
+Also, look at this: https://arxiv.org/pdf/1708.02840.pdf (Speaker diarization using deep recurrent
+convolutional neural networks for speaker embeddings)
+
+
 # Feb 17 2018
 
 Try running audio_test.py on a mix generated from Obama, Clinton speeches NOT in training set.

@@ -4,20 +4,32 @@ Script to mix two testing samples
 import librosa
 import numpy as np
 
+SAMPLE_RATE = 8000
 
-# provide the wav name and mix
-# speech1 = '/media/nca/data/raw_data/speech_train_r/FCMM0/TRAIN_DR2_FCMM0_SI1957.WAV'
-# speech2 = '/media/nca/data/raw_data/speech_train_r/FKLC0/TRAIN_DR4_FKLC0_SX355.WAV'
+speech1 = '/home/eric/deep-clustering/db/original/test/hillary_clinton/01_clinton.wav'
+speech2 = '/home/eric/deep-clustering/db/original/test/barack_obama/02_obama.wav'
 
-# FROM TRAINING SET
-#speech1 = '/home/eric/deep-clustering/db/train/ange_ansour/ange_ansour-0000120000-0000176000.wav'
-#speech2 = '/home/eric/deep-clustering/db/train/bernard_werber/bernard_werber-0000176000-0000232000.wav'
 
-# FROM TEST SET
-speech1 = '/home/eric/deep-clustering/db/original/test/barack_obama/02_obama.wav'
-speech2 = '/home/eric/deep-clustering/db/original/test/hillary_clinton/02_clinton.wav'
+# generating partial overlap mixtures
 
-data1, _ = librosa.load(speech1, sr=8000)
-data2, _ = librosa.load(speech2, sr=8000)
+data1, _ = librosa.load(speech1, sr=SAMPLE_RATE)
+
+empty_third = np.zeros(len(data1)/3)
+
+two_thirds = data1[0:-len(data1)/3]
+
+data1 = np.array(list(empty_third) + list(two_thirds))
+
+data2, _ = librosa.load(speech2, sr=SAMPLE_RATE)
+
+empty_third = np.zeros(len(data2)/3)
+
+two_thirds = data2[0:-len(data2)/3]
+
+data2 = np.array(list(two_thirds) + list(empty_third))
+
 mix = data1[:len(data2)] + data2[:len(data1)]
+
 librosa.output.write_wav('mix.wav', mix, 8000)
+librosa.output.write_wav('spkr1.wav', data1, 8000)
+librosa.output.write_wav('spkr2.wav', data2, 8000)

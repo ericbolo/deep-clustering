@@ -1,0 +1,5 @@
+\beamer@sectionintoc {1}{Motivation}{3}{0}{1}
+\beamer@sectionintoc {2}{Deep learning methods}{4}{0}{2}
+\beamer@subsectionintoc {2}{1}{Deep clustering (DPCL)}{4}{0}{2}
+\beamer@subsectionintoc {2}{2}{Deep Attractor Networks (DANet)}{11}{0}{2}
+\beamer@sectionintoc {3}{Bibliography}{21}{0}{3}

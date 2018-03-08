@@ -1,0 +1,319 @@
+\documentclass[11pt]{beamer}
+\usetheme{Luebeck}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\author{Eric Bolo}
+\title{Speaker separation and diarization \linebreak with deep learning}
+%\setbeamercovered{transparent} 
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+%\logo{} 
+\institute{Batvoice} 
+%\date{} 
+%\subject{} 
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\tableofcontents
+\end{frame}
+
+\section{Motivation}
+\begin{frame}{Motivation}
+
+State of the art prior to deep learning:
+
+\begin{itemize}
+\item Non-negative Matrix Factorization (NMF)
+\item CASA: Computational Auditory Scene Analysis
+	\begin{itemize}
+		\item Generates embeddings with specialized, hand-picked features
+	\end{itemize}
+\end{itemize}
+
+Problems:
+\begin{itemize}
+\item hard to optimize
+\item performs poorly with low quality audio, e.g. 8KHz, 8-bit, mono telephone recordings from PVCP.
+\end{itemize}
+
+\end{frame}
+\section{Deep learning methods}
+\subsection{Deep clustering (DPCL)}
+
+\begin{frame}{Deep clustering (1)}
+Deep learning has been successful in speaker-dependent separation and for many speech enhancement tasks, but until recently underperformed when given the task of separating unknown speakers.
+\linebreak
+\linebreak
+Deep learning methods for separation generally work by applying a mask to the mixture spectrogram, one mask per speaker.
+\linebreak
+\linebreak
+Without prior knowledge of the speakers, the network must preserve the order of the speakers in the outputs, i.e. preserve the same output mask for the same speaker across time. It's the "permutation problem" \cite{1607.02173}.
+\end{frame}
+
+\begin{frame}{Deep clustering (2)}
+To tackle permutation, Isik et al. frame the problem as one of clustering rather than classification. 
+\linebreak
+\linebreak
+The goal is to cluster together input TF-bins where the same source dominates, without explicitly assigning the bins to a source \cite{1607.02173}.
+\end{frame}
+
+\begin{frame}{Deep clustering (3)}
+Raw input signal: $x$ 
+\linebreak
+\linebreak
+Time-Frequency spectrogram index: $(t,f)$
+\linebreak
+\linebreak
+Feature vector: $X_{i} = g_{i}(x)$, $i \in {1,..,N}$, $X_{i} = X_{(t,f)}$, g: STFFT
+\linebreak
+\linebreak
+Target partition (ground-truth): $Y={ \{y_{i,c} \}}$
+\linebreak
+\begin{equation}
+  y_{i,c} =
+  \begin{cases}
+    1 & \text{if $c$ is the dominant source at $i$} \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+\end{frame}
+
+\begin{frame}{Deep clustering (4)}
+$A = YY^T$
+\linebreak
+$A \in R^{NxN}$ is a binary affinity matrix such that: 
+\linebreak
+\begin{equation}
+  A_{i,j} =
+  \begin{cases}
+    1 & \text{if $i$ and $j$ belong to the same cluster} \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+\linebreak
+\linebreak
+$YY^T$ is permutation-invariant, i.e. indifferent to the ordering of the clusters $c$:
+\linebreak
+\begin{equation}
+  (YP)(YP)^T = YY^T \text{for any permutation matrix $P$}
+\end{equation}
+\end{frame}
+
+\begin{frame}{Deep clustering (5)}
+The model produces an approximation $\hat{A}$ of $A$ by generating embeddings, i.e. high-dimensional representations of T-F bins that are suitable for clustering.
+\linebreak
+\linebreak
+\begin{equation}
+V = f_{\theta}(X) \in R^{NxD}
+\end{equation}
+\linebreak
+Where: 
+\begin{itemize}
+\item $\theta$: parameters of the model
+\item $D$: chosen embedding dimension
+\item $|v_i|^2=1$
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Deep clustering (6)}
+Cost function:
+\linebreak
+\begin{equation}
+C_Y(V) = ||\hat{A} - A||^2_{F} = ||VV^T - YY||^2_{F}
+\end{equation}
+\linebreak
+\linebreak
+During inference, the embeddings $V$ are clustered using K-means.
+\linebreak
+\linebreak
+Network architecture: 4 BLSTM layers + 1 fully connected forward layer with tanh activation
+\end{frame}
+
+\begin{frame}{Deep clustering (7)}
+
+Deep clustering outperforms baseline models (NMF, CASA) by a large margin.
+\linebreak
+\linebreak
+But... the model only handles the permutation problem at the utterance level. Memory limitations impose a maximum input length causing the input audio file to be chunked into utterances whose outputs are independent. A post-clustering step is needed to connect separated sources across utterances. Hence:
+\begin{itemize}
+\item no end-to-end optimization
+\item no real-time processing
+\end{itemize}
+
+\end{frame}
+
+\subsection{Deep Attractor Networks (DANet)}
+\begin{frame}{Deep Attractor Networks (1)}
+
+DANet starts from the same structure as DPCL: a stack of BLSTM layers topped by a fully-connected layer which generates D-dimensional embeddings for all TF-bins:
+\begin{equation}
+V = f_{\theta}(X) \in R^{NxD}
+\end{equation}
+(Borrowing notation from the DPCL paper \cite{1607.02173} for consistency)
+\linebreak
+\linebreak
+The difference lies in how the model computes the loss. In DPCL, the loss is the Frobenius norm of the distance between an ideal and an estimated affinity matrix. DANet instead uses "attractors" in the embedding space to compute similarity \cite{1707.03634}
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (2)}
+
+An attractor $A \in R^{1xD}$ represents a specific speaker.
+\linebreak
+During training, the attractors represent the centroid of each speaker:
+\begin{equation}
+A_i = \frac {Y_iV}{\sum\limits_{f,t}{Y_i}}, i \in [1,C]
+\end{equation}
+Where:
+\begin{itemize}
+\item $Y_i \in R^{1xN}$ contains the speaker assignments for speaker i, for each TF-bin (binary or real values between 0 and 1).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (3)}
+
+Power filter: robustify model by taking into account only those TF-bins where power is greater than some threshold $\rho$:
+
+\begin{equation}
+  W =
+  \begin{cases}
+    1 & \text{if $X > \rho$} \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+
+\begin{equation}
+A_i = \frac { (Y_i \odot W) V} { \sum\limits_{f,t}{(Y_i \odot W)} }, i\in [1,C]
+\end{equation}
+\linebreak
+Where $\odot$ is element-wise multiplication.
+\end{frame}
+
+
+\begin{frame}{Deep Attractor Networks (4)}
+Define $D_i \in R^{1xN}$ to be the distance of each TF-bin in the embedding space from the attractor $i$.
+
+\begin{equation}
+D_i = A_iV^T, i \in [1,C]
+\end{equation}
+
+Estimated mask for each speaker:
+
+\begin{equation}
+\hat{M_{i}} = H(D_i), i \in [1,C]
+\end{equation}
+Where $H$ is a non-linear function (sigmoid or softmax) which normalizes the distances s.t. $0 < H(D_i) < 1,     \forall D_i$.
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (5)}
+
+Given ground truth masks $M_i$, the loss is the $L_2$ reconstruction error:
+
+\begin{equation}
+L = \frac{1}{C} |X \odot (M_i - \hat{M_{i}})|^2_2
+\end{equation}
+
+The masks are a function of both the attractors and embeddings, so the loss incentivizes the network to pull same-speaker embeddings together and pull the attractors away from each other.
+
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (6)}
+
+How to estimate attractors during inference?
+\linebreak	
+\begin{itemize}
+\item Cluster the embeddings with K-means and define the attractors to be the centers of the clusters
+\item Define fixed attractors: take the mean of the attractors from all training mixtures, and use those averages as inference attractors
+\item Anchored DANet (ADANet): Teach the model to generate attractors during training and inference using "anchors" in the embedding space
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (7)}
+
+ADANet uses trainable anchors, vectors in the embedding space, to estimate speaker assignment $Y$ when both training and inferring. $Y$ is then used to find the attractors as in the original DANet. 
+\linebreak
+\linebreak
+ADANet initializes $C_{max}$ anchors:
+\linebreak
+\begin{equation}
+B_j \in R^{1xD}, j \in [1, C_{max}]
+\end{equation}
+Where $C_{max}$ is the maximum number of speakers in the training mixtures.
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (8)}
+
+In a mixture with $C$ speakers:
+\begin{itemize}
+\item select all $C$ combinations of the $C_{max}$ anchors, denoted by $L_p$
+\begin{itemize}
+\item $L_p \in R^{CxD}, p \in [1, {C_{max} \choose C}]$
+\end{itemize}
+\item find the distance of the embeddings from the anchors in each subset
+\begin{itemize}
+\item $D_p = L_pV^T, p \in [1, {C_{max} \choose C}]$
+\end{itemize}
+\item use the distances to estimate speaker assignment:
+\begin{itemize}
+\item $\hat{Y_{p}} = Softmax(D_p)$
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (9)}
+
+For each anchor subset $p$, $C$ attractors are generated taking $\hat{Y_p}$ as the speaker assignments.
+\linebreak
+\begin{equation}
+A_p \in R^{CxD}, p \in {C_{max} \choose C}
+\end{equation}
+\linebreak
+ADAnet selects the set of attractors which maximizes the distance between attractors within the set.
+
+\begin{equation}
+S_p = A_p A_p^T, S_p \in R^{CxC}
+\end{equation}
+
+\begin{equation}
+s_p = \text{max } S_{p_{ij}}, i \neq j
+\end{equation}
+
+\begin{equation}
+\hat{A} = \argmin_{A_{p}} {s_p}, p p_in {C_{max} \choose C}
+\end{equation}
+
+\end{frame}
+
+\begin{frame}{Deep Attractor Networks (10)}
+
+ADANet pros
+\begin{itemize}
+\item no need for speaker assignment during inference
+\item fully end-to-end
+\end{itemize}
+
+ADANet cons
+\begin{itemize}
+\item increases computational complexity
+\item "since the correct permutation of the anchors is unknown, permutation invariant training is required for training the ADANet" (???) 
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\section{Bibliography}
+\bibliographystyle{plain}
+\bibliography{speaker_separation}
+
+\end{document}
