@@ -61,7 +61,7 @@ class DataGenerator(object):
                 data, sr = librosa.load(file, SAMPLING_RATE)
                 librosa.output.write_wav(file, data, SAMPLING_RATE)
 
-    def reinit(self):
+    def reinit(self, fraction_overlap=1.):
         '''Init the training data using the wav files'''
         self.speaker_file_match = {}
         # generate match dict
@@ -87,10 +87,17 @@ class DataGenerator(object):
             speech_2, _ = librosa.core.load(j, sr=SAMPLING_RATE)
             fac = np.random.rand(1)[0] * 6 - 3
             speech_2 = 10. ** (fac / 20) * speech_2
+
             # mix
             length = min(len(speech_1), len(speech_2))
             speech_1 = speech_1[:length]
             speech_2 = speech_2[:length]
+
+            padding = round(length * (1 - fraction_overlap) / (fraction_overlap + 2))
+
+            speech_1 = np.concatenate((speech_1, np.zeros([padding])))
+            speech_2 = np.concatenate((np.zeros([padding]), speech_2))
+
             speech_mix = speech_1 + speech_2
             # compute log spectrum for 1st speaker
             speech_1_spec = np.abs(stft(speech_1, FRAME_SIZE)[:, :NEFF])

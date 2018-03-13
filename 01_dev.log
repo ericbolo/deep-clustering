@@ -1,10 +1,61 @@
+# Mar 12 2018
+
+Bss_eval (e. Vincent method) produces results that make sense, see ./eval_sdr.py
+
+Next steps:
+
+- test sensitivity of metrics to noise
+
+- train model with no-overlap and partial overlap mixtures:
+
+    - 0% overlap (half/half)
+    - 20% overlap
+    - 50% overlap
+
+- Investigate post-processing step: cluster speakers across chunks (speaker continuity)
+
+    - one-class SVM
+    - Gaussian, Hotteling distances
+
+- Then, need a method to identify agent vs. client
+
+
+# Mar 11 2018
+
+Implementing SNR
+
+
 # Mar 8 2018
+
+Discussing next steps:
+
+- evaluation metric
+
+    - look at basic "SNR" in eval_snr.py
+    - look at advanced metrics from https://www.irisa.fr/metiss/SASSEC07/?show=criteria, ./vincent_LVA12.pdf
+
+- train with overlap
+
+    - 2 hrs, 2 identified speakers
+    - different levels of overlap: 10, 20, 30 %
+
+Other reference: https://hal.inria.fr/inria-00544230/document
+
+available matlab toolbox: http://bass-db.gforge.inria.fr/bss_eval/
+
+Possibly simpler performance measures: https://www-n.oca.eu/Bijaoui/doc_ab/cardon/ica99.pdf
+
+Other interesting repo: https://github.com/CVSSP/perceptual-study-source-separation
+
+Python code using E. Vincent's techniques: https://github.com/craffel/mir_eval/blob/master/mir_eval/separation.py
+
+-----
 
 Testing speaker separation with (1) single speaker in mixture, (2) two speakers in mixture with partial overlap.
 
-----
+Results so far: partially successful. Could be enough for diarization.
 
-Remote IP: 52.214.81.112
+Need to have a benchmark.
 
 # Feb 21 2018
 
